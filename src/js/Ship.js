@@ -3,12 +3,17 @@ class Ship {
     this.length = length;
     this.hits = initialHits;
     this.sunk = false;
+    this.position = null;
   }
 
   hit() {
     this.hits++;
     this.sunk = this.#isSunk();
     return this.hits;
+  }
+
+  setPosition(position) {
+    this.position = position;
   }
 
   #isSunk() {
