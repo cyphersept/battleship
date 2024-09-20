@@ -127,4 +127,14 @@ describe("helper functions", () => {
       myBoard.arrsMatch(myBoard.ships[0].position, myBoard.ships[0].position)
     ).toBe(true);
   });
+  it("identifies squares adjacent to a coordinate", () => {
+    const adjacent = myBoard.adjacentSquares([0, 0]);
+    const comparedArr = [
+      [0, 1],
+      [1, 0],
+    ];
+    for (let i = 0; i < adjacent.length; i++) {
+      expect(myBoard.arrsMatch(adjacent[i], comparedArr[i])).toBe(true);
+    }
+  });
 });

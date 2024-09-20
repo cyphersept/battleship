@@ -43,16 +43,35 @@ class Board {
   allSunk() {
     return this.ships.every((ship) => ship.sunk);
   }
-
-  arrsMatch(arr1, arr2) {
-    const match = arr1.every((el) => arr2.includes(el));
-    return match;
+  randomCoord() {
+    return [
+      Math.floor(Math.random() * this.size),
+      Math.floor(Math.random() * this.size),
+    ];
   }
 
+  // Lists squares adjacent to a coordinate
+  adjacentSquares([x, y]) {
+    const arr = [];
+    if (x - 1 >= 0) arr.push([x - 1, y]);
+    if (y - 1 >= 0) arr.push[(x, y - 1)];
+    if (x + 1 < this.size) arr.push([x + 1, y]);
+    if (y + 1 < this.size) arr.push([x, y + 1]);
+    return arr;
+  }
+
+  arrsMatch(arr1, arr2) {
+    const match1 = arr1.every((el) => arr2.includes(el));
+    const match2 = arr2.every((el) => arr1.includes(el));
+    return match1 && match2;
+  }
+
+  // Checks if a coordinate is on the board
   #coordInBounds(coordPair) {
     return coordPair.every((n) => n >= 0 && n < this.size);
   }
 
+  // Checks if a ship can be placed at a set of coordinates
   #validateShipPos(ship, position) {
     // All position coordinates are within board's boundaries
     const inBounds = position.every((el) => this.#coordInBounds(el));
