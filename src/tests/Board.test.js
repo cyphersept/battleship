@@ -22,6 +22,10 @@ function reset() {
 afterEach(() => reset());
 
 describe("places ship on board", () => {
+  it("places ship at random location if no coordinates are given", () => {
+    jest.spyOn(global.Math, "random").mockReturnValue(0.5);
+    expect(myBoard.placeShip(myShip));
+  });
   it("place ship at coordinates", () => {
     expect(myBoard.ships[0].position).toEqual(defaultTest.pos);
   });
@@ -118,6 +122,13 @@ describe("reports all ship sunk", () => {
       myBoard.receiveAttack(coord);
     }
     expect(myBoard.allSunk()).toBe(true);
+  });
+});
+
+describe("clears board", () => {
+  it("resets all ship positions", () => {
+    myBoard.ships.forEach((ship) => ship.reset());
+    expect(myBoard.ships.every((ship) => ship.position === null)).toBe(true);
   });
 });
 

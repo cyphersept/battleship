@@ -21,8 +21,10 @@ afterEach(() => {
   jest.spyOn(global.Math, "random").mockRestore();
 });
 
-it("generates board for player", () => {
-  expect(myPlayer.board.prototype).toEqual(someBoard.prototype);
+describe("game setup", () => {
+  it("generates board for player", () => {
+    expect(myPlayer.board.prototype).toEqual(someBoard.prototype);
+  });
 });
 
 describe("correct class inheritance", () => {

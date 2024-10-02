@@ -1,9 +1,10 @@
 class Ship {
-  constructor(length, initialHits = 0) {
+  constructor(length, initialHits = 0, name = "Ship") {
     this.length = length;
     this.hits = initialHits;
     this.sunk = false;
     this.position = null;
+    this.name = name;
   }
 
   hit() {
@@ -14,6 +15,12 @@ class Ship {
 
   setPosition(position) {
     this.position = position;
+  }
+
+  reset() {
+    this.hits = 0;
+    this.sunk = false;
+    this.position = null;
   }
 
   #isSunk() {

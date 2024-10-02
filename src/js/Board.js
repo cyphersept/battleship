@@ -1,6 +1,6 @@
 class Board {
-  constructor(size = 10) {
-    this.ships = [];
+  constructor(size = 10, ships = []) {
+    this.ships = ships;
     this.size = size;
   }
   #attacked = [];
@@ -11,10 +11,35 @@ class Board {
     );
   }
 
+  randomizeAllShips() {
+    for (const ship of this.ships) {
+      ship.reset();
+      this.placeShip(ship);
+    }
+  }
+
+  // Generate a set of unoccupied coordinates for the ship
+  getRandomPosition(ship) {
+    const range = this.size - ship.length;
+    const originPoint = this.randomCoord(range);
+    const hOrV = Math.floor(Math.random() * 2);
+    const vOrH = Math.abs(hOrV - 1);
+    const pos = [];
+    for (let i = 0; i < ship.length; i++) {
+      const point = Array(2);
+      point[hOrV] = originPoint[hOrV] + i;
+      point[vOrH] = originPoint[vOrH];
+      pos.push(point);
+    }
+    if (this.#validateShipPos(ship, pos)) return pos;
+    else this.getRandomPosition(ship);
+  }
+
   placeShip(ship, position) {
-    const positionValid = this.#validateShipPos(ship, position);
+    let p = position === undefined ? this.getRandomPosition(ship) : position;
+    const positionValid = this.#validateShipPos(ship, p);
     if (positionValid) {
-      ship.setPosition(position);
+      ship.setPosition(p);
       this.ships.push(ship);
     }
     return positionValid;
@@ -43,11 +68,8 @@ class Board {
   allSunk() {
     return this.ships.every((ship) => ship.sunk);
   }
-  randomCoord() {
-    return [
-      Math.floor(Math.random() * this.size),
-      Math.floor(Math.random() * this.size),
-    ];
+  randomCoord(max = this.size) {
+    return [Math.floor(Math.random() * max), Math.floor(Math.random() * max)];
   }
 
   // Lists squares adjacent to a coordinate
