@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Battleship</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="spotlight"></div>
+    <template id="ship-template">
+      <div class="ship">
+        <div class="ship-name"></div>
+        <div class="ship-visual"></div>
+      </div>
+    </template>
+    <header>
+      <h1>Battleship</h1>
+    </header>
+    <main class="game">
+      <div class="info">
+        <div class="msg">Click to start</div>
+        <button id="random">Randomize ships</button>
+        <button id="start">Start</button>
+      </div>
+      <section class="players">
+        <div class="player1">
+          <h2 class="name">Player1</h2>
+          <div class="board"></div>
+          <div class="status">
+            <h3>Ships</h3>
+          </div>
+        </div>
+        <div class="player2">
+          <h2 class="name">CPU</h2>
+          <div class="board"></div>
+          <div class="status">
+            <h3>Ships</h3>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>Source code:</span>
+      <a
+        href="http://github.com/cyphersept/memory-game"
+        target="_blank"
+        rel="noopener noreferrer"
+        >cyphersept
+      </a>
+    </footer>
+  </body>
+</html>
