@@ -31,7 +31,7 @@ body {
     top: 0;
     left: 0;
     background-color: white;
-    background: url("./silas-baisch-K785Da4A_JA-unsplash.jpg") no-repeat;
+    background: url("./silas-baisch-K785Da4A_JA-unsplash.webp") no-repeat;
     background-size: 100% auto;
     will-change: transform;
     z-index: -1;
@@ -119,6 +119,24 @@ header {
     linear-gradient(to bottom, var(--c4) 2px, transparent 1px);
 }
 
+.tile {
+  background-color: var(--c0);
+  text-align: center;
+  transition: background-color 0.1s ease-out;
+
+  &:hover {
+    background-color: var(--c3);
+  }
+  &.hit {
+    content: "🗙";
+    color: rgb(134, 31, 31);
+    background-color: rgba(255, 109, 109, 0.5);
+  }
+  &.miss {
+    content: "🞨";
+  }
+}
+
 .status {
   background: var(--c3);
   box-shadow: 0 8px 32px 0 var(--c4);
@@ -129,13 +147,23 @@ header {
 }
 
 .ship {
-  --length: 0;
+  --size: 0;
   .ship-visual {
+    position: relative;
     height: 2rem;
-    width: calc(var(--length) * 2rem);
+    width: calc(var(--size) * 2rem);
     border: 1px double aliceblue;
     background: var(--c3);
     box-shadow: 0 8px 32px 0 var(--c4);
+  }
+  .sunk::after {
+    position: absolute;
+    text-align: center;
+    height: 3rem;
+    width: calc(var(--size) * 2rem);
+    top: -1rem;
+    content: "🗙";
+    color: rgb(134, 31, 31);
   }
 }
 
