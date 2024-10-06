@@ -14,7 +14,7 @@ class Human extends Player {
 }
 
 class CPU extends Player {
-  constructor(name) {
+  constructor(name = "CPU") {
     super(name);
     this.plans = [];
   }

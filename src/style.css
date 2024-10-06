@@ -6,21 +6,27 @@
   --c4: #00334b;
   font-family: "Courier New", Courier, monospace;
   color: aliceblue;
+  --unit: 2rem;
 }
 
 html,
 body {
   margin: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   background-size: 100% auto;
-  overflow: hidden;
+  min-height: fit-content;
   position: relative;
 
   &::before {
@@ -57,7 +63,6 @@ button {
   color: var(--c1);
   border-radius: 0.4rem;
   border: 1px solid var(--c0);
-  box-shadow: 0 8px 32px 0 var(--c4);
   padding: 0.5rem;
   font-size: 1rem;
   transition: background-color 0.4s ease-in-out;
@@ -96,11 +101,13 @@ header {
 }
 
 .players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
   > * {
-    display: inline-block;
-  }
-  .player1 {
-    margin-right: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .disabled {
     opacity: 0.4;
@@ -108,42 +115,61 @@ header {
 }
 
 .board {
-  width: 20rem;
-  height: 20rem;
-  background-color: var(--c0);
-  background-size: 10% 10%;
-  border: 2px solid var(--c4);
-  border-right: 3px solid var(--c4);
-  border-bottom: 3px solid var(--c4);
-  background-image: linear-gradient(to right, var(--c4) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--c4) 2px, transparent 1px);
-}
+  display: grid;
+  grid-template-rows: repeat(10, var(--unit));
+  grid-template-columns: repeat(10, var(--unit));
+  gap: 4px;
 
-.tile {
-  background-color: var(--c0);
-  text-align: center;
-  transition: background-color 0.1s ease-out;
+  .tile {
+    width: var(--unit);
+    height: var(--unit);
+    border-radius: 0.125rem;
+    list-style-type: none;
+    background-color: var(--c0);
+    text-align: center;
+    transition: background-color 0.1s ease-out;
 
-  &:hover {
-    background-color: var(--c3);
-  }
-  &.hit {
-    content: "🗙";
-    color: rgb(134, 31, 31);
-    background-color: rgba(255, 109, 109, 0.5);
-  }
-  &.miss {
-    content: "🞨";
+    &:hover {
+      background-color: var(--c3);
+    }
+    &.hit::after {
+      content: "🗙";
+      font-size: var(--unit);
+      transform: translateX(-50%);
+      vertical-align: super;
+      width: var(--unit);
+      height: var(--unit);
+      position: absolute;
+      color: rgb(134, 31, 31);
+      background-color: rgba(255, 109, 109, 0.5);
+    }
+    &.miss::after {
+      content: "🞨";
+      font-size: var(--unit);
+      transform: translateX(-50%);
+      vertical-align: super;
+      width: var(--unit);
+      height: var(--unit);
+      position: absolute;
+    }
   }
 }
 
 .status {
   background: var(--c3);
-  box-shadow: 0 8px 32px 0 var(--c4);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 1rem;
   margin-top: 1rem;
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    max-width: 20rem;
+  }
+  h3 {
+    margin-top: 0.5rem;
+  }
 }
 
 .ship {
@@ -151,16 +177,15 @@ header {
   .ship-visual {
     position: relative;
     height: 2rem;
-    width: calc(var(--size) * 2rem);
+    width: calc(var(--size) * var(--unit));
     border: 1px double aliceblue;
     background: var(--c3);
-    box-shadow: 0 8px 32px 0 var(--c4);
   }
   .sunk::after {
     position: absolute;
     text-align: center;
     height: 3rem;
-    width: calc(var(--size) * 2rem);
+    width: calc(var(--size) * var(--unit));
     top: -1rem;
     content: "🗙";
     color: rgb(134, 31, 31);
@@ -168,7 +193,6 @@ header {
 }
 
 footer {
-  position: fixed;
   text-align: center;
   color: var(--c4);
   width: 100%;
@@ -190,4 +214,22 @@ footer {
     background-size: contain;
     vertical-align: sub;
   }
+}
+
+.shadow,
+.ship-visual,
+.board,
+.status,
+button {
+  box-shadow: 0 8px 32px 0 var(--c4);
+}
+
+.grid-pattern {
+  background-color: var(--c0);
+  background-size: 10% 10%;
+  border: 2px solid var(--c4);
+  border-right: 3px solid var(--c4);
+  border-bottom: 3px solid var(--c4);
+  background-image: linear-gradient(to right, var(--c4) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--c4) 2px, transparent 1px);
 }

@@ -132,6 +132,22 @@ describe("clears board", () => {
   });
 });
 
+describe("randomly places ships from a list", () => {
+  test("game config", () => {
+    const shipSet = [
+      [5, "Carrier"],
+      [4, "Battleship"],
+      [3, "Cruiser"],
+      [3, "Submarine"],
+      [2, "Destroyer"],
+    ];
+
+    for (const [size, name] of shipSet) {
+      myBoard.placeShip(new Ship(size, 0, name));
+    }
+  });
+});
+
 describe("helper functions", () => {
   it("checks if arrays are equal", () => {
     expect(

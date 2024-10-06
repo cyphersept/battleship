@@ -2,7 +2,7 @@ const { CPU, Human } = require("./Player.js");
 const { Ship } = require("./Ship.js");
 require("../style.css");
 
-(function Game() {
+function Game() {
   const player = new Human();
   const opponent = new CPU();
   var turn;
@@ -14,14 +14,20 @@ require("../style.css");
     [2, "Destroyer"],
   ];
 
-  // Randomly place ships on both boards
-  for (const [size, name] of shipSet) {
-    player.board.placeShip(new Ship(size, 0, name));
-    opponent.board.placeShip(new Ship(size, 0, name));
-  }
+  const init = () => {
+    // Randomly place ships on both boards
+    for (const [size, name] of shipSet) {
+      player.board.placeShip(new Ship(size, 0, name));
+    }
+    for (const [size, name] of shipSet) {
+      opponent.board.placeShip(new Ship(size, 0, name));
+    }
 
-  setListeners();
-  renderShipStatus(shipSet);
+    renderBoard(document.querySelector(".player1 .board"), player.board);
+    renderBoard(document.querySelector(".player2 .board"), opponent.board);
+    setListeners();
+    renderShipStatus(shipSet);
+  };
 
   const setListeners = () => {
     document.querySelector(".player2 .board").onclick = launchPlayerAttack;
@@ -30,6 +36,7 @@ require("../style.css");
 
   const start = () => {
     turn = player;
+    updateMsg(player.name + "'s turn: choose a tile to attack");
   };
 
   const getCoord = (e) => {
@@ -45,20 +52,37 @@ require("../style.css");
   // Attack the targeted tile against the CPU
   const launchPlayerAttack = (e) => {
     if (turn !== player) return;
-    const coords = [e.target.dataset.x, e.target.dataset.y];
+    const coords = [parseInt(e.target.dataset.x), parseInt(e.target.dataset.y)];
     const hitSuccess = player.board.receiveAttack(coords);
+    if (hitSuccess === undefined) return;
+    const status = hitSuccess ? "Hit" : "Miss";
     updateHit(e.target, hitSuccess);
+    updateMsg(
+      `${player.name} attacked ${coordName(coords)}. ${status}!\n${
+        opponent.name
+      } is thinking...`
+    );
     turn = opponent;
     launchCPUAttack();
   };
 
   // Have the CPU target and attack a player tile
-  const launchCPUAttack = () => {
+  const launchCPUAttack = async () => {
+    await wait(1000);
     const coords = opponent.pickAttack(player.board);
     const hitSuccess = player.board.receiveAttack(coords);
     opponent.evaluateAttack(coords, hitSuccess, player.board); // Learn from attack
-    // TO DO const target;
+    const place = coords[1] * player.board.size + coords[0];
+    const target = document
+      .querySelector(".player1 .board")
+      .children.item(place);
+    const status = hitSuccess ? "Hit" : "Miss";
     updateHit(target, hitSuccess);
+    updateMsg(
+      `${opponent.name} attacked ${coordName(coords)}. ${status}!\n${
+        player.name
+      }'s turn:'`
+    );
     turn = player;
   };
 
@@ -80,15 +104,16 @@ require("../style.css");
   // Displays ship list for both players
   const renderShipStatus = (list) => {
     const template = document.getElementById("ship-template");
-    const p1Status = document.querySelector(".player1 .status");
-    const p2Status = document.querySelector(".player2 .status");
+    const p1Status = document.querySelector(".player1 .list");
+    const p2Status = document.querySelector(".player2 .list");
     for (const [size, name] of list) {
       const ship1 = template.content.cloneNode(true);
-      ship1.style.setProperty("--size", size);
-      ship1.firstChild.textContent = name;
+      ship1.querySelector(".ship-name").textContent = name;
       const ship2 = ship1.cloneNode(true);
       p1Status.appendChild(ship1);
       p2Status.appendChild(ship2);
+      p1Status.lastElementChild.style.setProperty("--size", size);
+      p2Status.lastElementChild.style.setProperty("--size", size);
     }
   };
 
@@ -117,6 +142,12 @@ require("../style.css");
   };
   const renderShip = () => {};
 
+  //
+  const coordName = ([x, y]) => {
+    const rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+    return rows[y] + (x + 1);
+  };
+
   // Marks hit or miss on board
   const updateHit = (el, hitSuccess) => {
     if (hitSuccess) el.classList.add("hit");
@@ -134,6 +165,8 @@ require("../style.css");
     opponent.board.randomizeAllShips();
   };
 
+  const wait = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+
   // Clears all states
   const reset = () => {
     //TODO: RESET BOARDS
@@ -147,4 +180,6 @@ require("../style.css");
   };
 
   return { init };
-})();
+}
+
+Game().init();

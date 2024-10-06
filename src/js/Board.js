@@ -11,6 +11,7 @@ class Board {
     );
   }
 
+  // Randomly repositions and resets all ships in the ship list
   randomizeAllShips() {
     for (const ship of this.ships) {
       ship.reset();
@@ -31,10 +32,13 @@ class Board {
       point[vOrH] = originPoint[vOrH];
       pos.push(point);
     }
-    if (this.#validateShipPos(ship, pos)) return pos;
-    else this.getRandomPosition(ship);
+    // Keep generating positions until a valid one is found
+    if (!this.#validateShipPos(ship, pos)) this.getRandomPosition(ship);
+    if (pos === undefined) console.log(pos);
+    else return pos;
   }
 
+  // Puts ship at specified or random location on board
   placeShip(ship, position) {
     let p = position === undefined ? this.getRandomPosition(ship) : position;
     const positionValid = this.#validateShipPos(ship, p);
@@ -44,6 +48,8 @@ class Board {
     }
     return positionValid;
   }
+
+  // Updates board based on hit or miss at square
   receiveAttack(atkCoord) {
     if (this.beenAttacked(atkCoord) || !this.#coordInBounds(atkCoord))
       return undefined;
@@ -82,6 +88,7 @@ class Board {
     return arr;
   }
 
+  // Checks if two arrays are equal
   arrsMatch(arr1, arr2) {
     const match1 = arr1.every((el) => arr2.includes(el));
     const match2 = arr2.every((el) => arr1.includes(el));
