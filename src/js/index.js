@@ -74,17 +74,13 @@ function Game() {
 
   // Have the CPU target and attack a player tile
   const launchCPUAttack = async () => {
-    await wait(1000);
     // Launch and learn from attack
+    await wait(1000);
     const coords = opponent.pickAttack(player.board);
     const hitSuccess = player.board.receiveAttack(coords);
     opponent.evaluateAttack(coords, hitSuccess, player.board);
 
     // Updates game
-    //const place = coords[1] * player.board.size + coords[0];
-    // const target = document
-    //   .querySelector(".player1 .board")
-    //   .children.item(place);
     const target = document.querySelector(
       `[data-x="${coords[0]}"][data-y="${coords[1]}"]`
     );
@@ -172,6 +168,7 @@ function Game() {
     else el.classList.add("miss");
   };
 
+  // Changes message displayed to player
   const updateMsg = (msg, concatMode = false) => {
     const el = document.querySelector(".msg");
     el.textContent = concatMode ? el.textContent + msg : msg;
