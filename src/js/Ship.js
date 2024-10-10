@@ -23,6 +23,10 @@ class Ship {
     this.position = null;
   }
 
+  isVertical() {
+    return this.position[0][0] == this.position[1][0] - 1 ? 0 : 1;
+  }
+
   #isSunk() {
     // console.log("Length " + this.length + " boat hit " + this.hits + " times");
     const status = this.hits >= this.length;

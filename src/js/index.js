@@ -17,14 +17,19 @@ function Game() {
   const init = () => {
     // Randomly place ships on both boards
     for (const [size, name] of shipSet) {
-      player.board.placeShip(new Ship(size, 0, name));
+      const currShip = new Ship(size, 0, name);
+      player.board.placeShip(currShip);
+      console.log(currShip.name + " placed at " + currShip.position);
     }
     for (const [size, name] of shipSet) {
-      opponent.board.placeShip(new Ship(size, 0, name));
+      const currShip = new Ship(size, 0, name);
+      opponent.board.placeShip(currShip);
     }
 
     renderBoard(document.querySelector(".player1 .board"), player.board);
     renderBoard(document.querySelector(".player2 .board"), opponent.board);
+    renderShips(document.querySelector(".player1 .board"), player.board);
+    renderShips(document.querySelector(".player2 .board"), opponent.board);
     setListeners();
     renderShipStatus(shipSet);
   };
@@ -32,29 +37,30 @@ function Game() {
   const setListeners = () => {
     document.querySelector(".player2 .board").onclick = launchPlayerAttack;
     document.getElementById("start").onclick = start;
+    document.getElementById("random").onclick = randomize;
   };
 
   const start = () => {
     turn = player;
     updateMsg(player.name + "'s turn: choose a tile to attack");
+    document.querySelector(".preparing").classList.remove("preparing");
   };
 
-  const getCoord = (e) => {
-    const x = e.clientX;
-    const y = e.clientY;
-    const maxX = e.target.clientWidth;
-    const maxY = e.target.clientY;
-    const coords = [Math.round((x * 10) / maxX), Math.round((y * 10) / maxY)];
-    console.log(coords);
-    return coords;
+  const getCoords = (el) => {
+    return [parseInt(el.dataset.x), parseInt(el.dataset.y)];
   };
 
   // Attack the targeted tile against the CPU
   const launchPlayerAttack = (e) => {
+    // Forbids attacks if not on player's turn
     if (turn !== player) return;
-    const coords = [parseInt(e.target.dataset.x), parseInt(e.target.dataset.y)];
-    const hitSuccess = player.board.receiveAttack(coords);
+    const coords = getCoords(e.target);
+    const hitSuccess = opponent.board.receiveAttack(coords);
+
+    // Cancels invalid attacks
     if (hitSuccess === undefined) return;
+
+    // Updates game
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(e.target, hitSuccess);
     updateMsg(
@@ -69,13 +75,19 @@ function Game() {
   // Have the CPU target and attack a player tile
   const launchCPUAttack = async () => {
     await wait(1000);
+    // Launch and learn from attack
     const coords = opponent.pickAttack(player.board);
     const hitSuccess = player.board.receiveAttack(coords);
-    opponent.evaluateAttack(coords, hitSuccess, player.board); // Learn from attack
-    const place = coords[1] * player.board.size + coords[0];
-    const target = document
-      .querySelector(".player1 .board")
-      .children.item(place);
+    opponent.evaluateAttack(coords, hitSuccess, player.board);
+
+    // Updates game
+    //const place = coords[1] * player.board.size + coords[0];
+    // const target = document
+    //   .querySelector(".player1 .board")
+    //   .children.item(place);
+    const target = document.querySelector(
+      `[data-x="${coords[0]}"][data-y="${coords[1]}"]`
+    );
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(target, hitSuccess);
     updateMsg(
@@ -119,30 +131,36 @@ function Game() {
 
   // Displays ship tokens on boards
   const renderShips = (el, board) => {
-    for (const [size, name] of board.ships) {
-      const token = document.createElement("div");
-      token.classList.add("ship-token");
-      token.setAttribute("--size", size);
-      token.dataset.name = name;
-
-      el.appendChild(token);
+    for (const ship of board.ships) {
+      renderShip(el, ship);
     }
+  };
+
+  // Renders token for a single ship
+  const renderShip = (el, ship) => {
+    const token = document.createElement("div");
+    token.classList.add("ship-token");
+    token.dataset.name = ship.name;
+    el.appendChild(token);
+    el.lastElementChild.style.setProperty("--size", ship.length);
+    el.lastElementChild.style.setProperty("--vertical", ship.isVertical());
+    el.lastElementChild.style.setProperty("--x", ship.position[0][0]);
+    el.lastElementChild.style.setProperty("--y", ship.position[0][1]);
   };
 
   // Updates sunk markers on ship list
-  const updateShips = (ships, board) => {
-    for (let i = 0; i < ships.length; i++) {
-      if (ships[i].sunk) {
+  const updateShips = (board) => {
+    for (let i = 0; i < board.ships.length; i++) {
+      if (board.ships[i].sunk) {
         const playerName = board.parentNode.querySelector(".name").textContent;
         const shipStatus = board.querySelector(`.status:nth-child(${i})`);
         shipStatus.classList.add("sunk");
-        updateMsg(playerName + ships[i].name + "was sunk!");
+        updateMsg(playerName + board.ships[i].name + "was sunk!", "concat");
       }
     }
   };
-  const renderShip = () => {};
 
-  //
+  // Translates coordinate pair to battleship board labels
   const coordName = ([x, y]) => {
     const rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     return rows[y] + (x + 1);
@@ -154,22 +172,29 @@ function Game() {
     else el.classList.add("miss");
   };
 
-  const updateMsg = (msg) => {
+  const updateMsg = (msg, concatMode = false) => {
     const el = document.querySelector(".msg");
-    el.textContent = msg;
+    el.textContent = concatMode ? el.textContent + msg : msg;
   };
 
   // Randomize ship positions
   const randomize = () => {
+    // Delete ship tokens from board
+    const oldTokens = document.querySelectorAll(".ship-token");
+    for (const el of oldTokens) el.remove();
+
+    // Render tokens at new ship positions
     player.board.randomizeAllShips();
     opponent.board.randomizeAllShips();
+    renderShips(document.querySelector(".player1 .board"), player.board);
+    renderShips(document.querySelector(".player2 .board"), opponent.board);
   };
 
   const wait = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
   // Clears all states
   const reset = () => {
-    //TODO: RESET BOARDS
+    // Remove hit/miss markings from tiles and status
     const toClear = ["hit", "miss", "sunk", "disabled"];
     for (const tag of toClear) {
       const els = document.querySelectorAll("." + tag);
@@ -177,6 +202,8 @@ function Game() {
         el.classList.remove(tag);
       });
     }
+    // Randomize ship positions
+    this.randomize();
   };
 
   return { init };

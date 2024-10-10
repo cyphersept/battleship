@@ -40,29 +40,34 @@ class Board {
 
   // Puts ship at specified or random location on board
   placeShip(ship, position) {
-    let p = position === undefined ? this.getRandomPosition(ship) : position;
+    let p = position == undefined ? this.getRandomPosition(ship) : position;
     const positionValid = this.#validateShipPos(ship, p);
+
+    // Place ship at valid position and add to list if untracked
     if (positionValid) {
       ship.setPosition(p);
-      this.ships.push(ship);
+      if (this.ships.indexOf(ship) === -1) this.ships.push(ship);
     }
+    // Try another random position
+    else this.placeShip(ship);
     return positionValid;
   }
 
   // Updates board based on hit or miss at square
   receiveAttack(atkCoord) {
-    if (this.beenAttacked(atkCoord) || !this.#coordInBounds(atkCoord))
+    // Discard invalid attacks
+    if (this.beenAttacked(atkCoord) || !this.coordInBounds(atkCoord))
       return undefined;
     let hit = false;
+    let attackedShip = this.shipAt(atkCoord);
+
+    // Mark coordinate as attacked
     this.#attacked.push(atkCoord);
-    for (const ship of this.ships) {
-      for (const shipCoord of ship.position) {
-        if (this.arrsMatch(atkCoord, shipCoord)) {
-          ship.hit();
-          hit = true;
-          break;
-        }
-      }
+
+    // Mark coordinate as hit
+    if (attackedShip) {
+      attackedShip.hit();
+      hit = true;
     }
     return hit;
   }
@@ -78,6 +83,18 @@ class Board {
     return [Math.floor(Math.random() * max), Math.floor(Math.random() * max)];
   }
 
+  // Returns the ship found at a coordinate (or false)
+  shipAt(coord) {
+    for (const ship of this.ships) {
+      for (const shipCoord of ship.position) {
+        if (this.arrsMatch(coord, shipCoord)) {
+          return ship;
+        }
+      }
+    }
+    return false;
+  }
+
   // Lists squares adjacent to a coordinate
   adjacentSquares([x, y]) {
     const arr = [];
@@ -90,20 +107,18 @@ class Board {
 
   // Checks if two arrays are equal
   arrsMatch(arr1, arr2) {
-    const match1 = arr1.every((el) => arr2.includes(el));
-    const match2 = arr2.every((el) => arr1.includes(el));
-    return match1 && match2;
+    return arr1[0] === arr2[0] && arr1[1] === arr2[1];
   }
 
   // Checks if a coordinate is on the board
-  #coordInBounds(coordPair) {
+  coordInBounds(coordPair) {
     return coordPair.every((n) => n >= 0 && n < this.size);
   }
 
   // Checks if a ship can be placed at a set of coordinates
   #validateShipPos(ship, position) {
     // All position coordinates are within board's boundaries
-    const inBounds = position.every((el) => this.#coordInBounds(el));
+    const inBounds = position.every((el) => this.coordInBounds(el));
 
     // Every coordinate is within 1 space of another (no diagonals)
     const continuous = position.every(([x1, y1]) =>
@@ -117,10 +132,13 @@ class Board {
     // No position overlaps another ship's coordinates
     const noOverlap = position.every(([x1, y1]) =>
       // Every coordinate must either belong to the same ship, or have a different x or y
-      this.ships.every((comparedShip) =>
-        comparedShip.position.every(
-          ([x2, y2]) => Object.is(ship, comparedShip) || x1 !== x2 || y1 !== y2
-        )
+      this.ships.every(
+        (comparedShip) =>
+          comparedShip.position === null || // Skip unpositioned ships
+          comparedShip.position.every(
+            ([x2, y2]) =>
+              Object.is(ship, comparedShip) || x1 !== x2 || y1 !== y2
+          )
       )
     );
 

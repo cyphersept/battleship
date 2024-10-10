@@ -2,7 +2,7 @@
   --c0: #7afff880;
   --c1: #6ee2dc;
   --c2: #159bb9;
-  --c3: #00457e4f;
+  --c3: #00457e70;
   --c4: #00334b;
   font-family: "Courier New", Courier, monospace;
   color: aliceblue;
@@ -114,11 +114,39 @@ header {
   }
 }
 
+.preparing .ship-token {
+  pointer-events: auto;
+}
+
 .board {
   display: grid;
   grid-template-rows: repeat(10, var(--unit));
   grid-template-columns: repeat(10, var(--unit));
   gap: 4px;
+  position: relative;
+
+  .ship-token {
+    --size: 0;
+    --vertical: 0;
+    --x: 0;
+    --y: 0;
+    position: absolute;
+    transform-origin: bottom left;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    height: var(--unit);
+    width: calc(var(--size) * (var(--unit) + 4px) - 4px);
+    transform: translateX(calc(var(--x) * (var(--unit) + 4px)))
+      translateY(
+        calc(
+          var(--y) * (var(--unit) + 4px) + var(--vertical) * -1 * var(--unit)
+        )
+      )
+      rotate(calc(90deg * var(--vertical)));
+    border: 4px double aliceblue;
+    background: var(--c3);
+  }
 
   .tile {
     width: var(--unit);
@@ -132,25 +160,23 @@ header {
     &:hover {
       background-color: var(--c3);
     }
+    &.miss::after,
+    &.hit::after {
+      content: "🞨";
+      margin-top: 0.15rem;
+      padding: auto;
+      font-size: var(--unit);
+      transform: translateX(-50%);
+      line-height: var(--unit);
+      width: var(--unit);
+      height: var(--unit);
+      position: absolute;
+    }
     &.hit::after {
       content: "🗙";
-      font-size: var(--unit);
-      transform: translateX(-50%);
-      vertical-align: super;
-      width: var(--unit);
-      height: var(--unit);
-      position: absolute;
+      margin-top: 0;
       color: rgb(134, 31, 31);
       background-color: rgba(255, 109, 109, 0.5);
-    }
-    &.miss::after {
-      content: "🞨";
-      font-size: var(--unit);
-      transform: translateX(-50%);
-      vertical-align: super;
-      width: var(--unit);
-      height: var(--unit);
-      position: absolute;
     }
   }
 }
@@ -176,9 +202,9 @@ header {
   --size: 0;
   .ship-visual {
     position: relative;
-    height: 2rem;
+    height: var(--unit);
     width: calc(var(--size) * var(--unit));
-    border: 1px double aliceblue;
+    border: 4px double aliceblue;
     background: var(--c3);
   }
   .sunk::after {
