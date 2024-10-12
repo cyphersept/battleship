@@ -45,16 +45,15 @@ body {
 }
 
 .spotlight {
-  position: fixed;
+  position: absolute;
   background-image: radial-gradient(circle, bisque, khaki);
   filter: blur(0.25rem);
   mix-blend-mode: overlay;
   width: 3rem;
   height: 3rem;
   border-radius: 2rem;
-  top: 0;
-  left: 0;
   pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 button {
@@ -97,6 +96,7 @@ header {
 
   .msg {
     margin: auto auto auto 0;
+    white-space: pre-line;
   }
 }
 
@@ -146,6 +146,7 @@ header {
       rotate(calc(90deg * var(--vertical)));
     border: 4px double aliceblue;
     background: var(--c3);
+    mix-blend-mode: hard-light;
   }
 
   .tile {
@@ -207,15 +208,36 @@ header {
     border: 4px double aliceblue;
     background: var(--c3);
   }
-  .sunk::after {
-    position: absolute;
-    text-align: center;
-    height: 3rem;
-    width: calc(var(--size) * var(--unit));
-    top: -1rem;
-    content: "🗙";
-    color: rgb(134, 31, 31);
+  .ship-visual.sunk {
+    background-color: rgba(255, 109, 109, 0.5);
   }
+  &.sunk .ship-visual::after {
+    content: "🗙";
+    margin-top: 0;
+    color: rgb(134, 31, 31);
+    margin-top: 0.15rem;
+    padding: auto;
+    font-size: var(--unit);
+    transform: translateX(-50%);
+    line-height: var(--unit);
+    width: var(--unit);
+    height: var(--unit);
+    position: absolute;
+  }
+}
+
+.modal {
+  padding: 2rem;
+  background-color: var(--c1);
+  color: var(--c4);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 footer {
@@ -246,6 +268,7 @@ footer {
 .ship-visual,
 .board,
 .status,
+.modal,
 button {
   box-shadow: 0 8px 32px 0 var(--c4);
 }

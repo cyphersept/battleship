@@ -26,18 +26,22 @@ function Game() {
       opponent.board.placeShip(currShip);
     }
 
-    renderBoard(document.querySelector(".player1 .board"), player.board);
-    renderBoard(document.querySelector(".player2 .board"), opponent.board);
-    renderShips(document.querySelector(".player1 .board"), player.board);
-    renderShips(document.querySelector(".player2 .board"), opponent.board);
-    setListeners();
+    renderBoard(getBoardEl(player), player.board);
+    renderBoard(getBoardEl(opponent), opponent.board);
+    renderShips(getBoardEl(player), player.board);
+    renderShips(getBoardEl(opponent), opponent.board);
     renderShipStatus(shipSet);
+    setListeners();
   };
 
   const setListeners = () => {
-    document.querySelector(".player2 .board").onclick = launchPlayerAttack;
+    getBoardEl(opponent).onclick = launchPlayerAttack;
     document.getElementById("start").onclick = start;
     document.getElementById("random").onclick = randomize;
+    document.querySelector(".modal button").onclick = reset;
+    document
+      .querySelector(".spotlight")
+      .addEventListener("mousemove", followMouse);
   };
 
   const start = () => {
@@ -63,19 +67,19 @@ function Game() {
     // Updates game
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(e.target, hitSuccess);
-    updateMsg(
-      `${player.name} attacked ${coordName(coords)}. ${status}!\n${
-        opponent.name
-      } is thinking...`
-    );
+    updateMsg(`${player.name} attacked ${coordName(coords)}. ${status}!`);
+    updateMsg(`${opponent.name} is thinking...`, "concat");
+    updateStatus(opponent);
     turn = opponent;
     launchCPUAttack();
   };
 
   // Have the CPU target and attack a player tile
   const launchCPUAttack = async () => {
-    // Launch and learn from attack
+    // Simulate thinking phase
     await wait(1000);
+
+    // Launch and learn from attack
     const coords = opponent.pickAttack(player.board);
     const hitSuccess = player.board.receiveAttack(coords);
     opponent.evaluateAttack(coords, hitSuccess, player.board);
@@ -86,11 +90,9 @@ function Game() {
     );
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(target, hitSuccess);
-    updateMsg(
-      `${opponent.name} attacked ${coordName(coords)}. ${status}!\n${
-        player.name
-      }'s turn:'`
-    );
+    updateMsg(`${opponent.name} attacked ${coordName(coords)}. ${status}!`);
+    updateMsg(`${player.name}'s turn:`, "concat");
+    updateStatus(player);
     turn = player;
   };
 
@@ -122,6 +124,8 @@ function Game() {
       p2Status.appendChild(ship2);
       p1Status.lastElementChild.style.setProperty("--size", size);
       p2Status.lastElementChild.style.setProperty("--size", size);
+      p1Status.lastElementChild.dataset.name = name;
+      p2Status.lastElementChild.dataset.name = name;
     }
   };
 
@@ -138,6 +142,7 @@ function Game() {
     token.classList.add("ship-token");
     token.dataset.name = ship.name;
     el.appendChild(token);
+    el.lastElementChild.setAttribute("draggable", "true");
     el.lastElementChild.style.setProperty("--size", ship.length);
     el.lastElementChild.style.setProperty("--vertical", ship.isVertical());
     el.lastElementChild.style.setProperty("--x", ship.position[0][0]);
@@ -145,15 +150,88 @@ function Game() {
   };
 
   // Updates sunk markers on ship list
-  const updateShips = (board) => {
-    for (let i = 0; i < board.ships.length; i++) {
-      if (board.ships[i].sunk) {
-        const playerName = board.parentNode.querySelector(".name").textContent;
-        const shipStatus = board.querySelector(`.status:nth-child(${i})`);
-        shipStatus.classList.add("sunk");
-        updateMsg(playerName + board.ships[i].name + "was sunk!", "concat");
+  const updateStatus = (targetPlayer) => {
+    const board = targetPlayer.board;
+    // Update status of newly sunk ships
+    for (const currShip of board.ships) {
+      if (currShip.sunk) {
+        const playerEl = getBoardEl(targetPlayer).parentNode;
+        const shipStatus = playerEl.querySelector(
+          `.ship[data-name="${currShip.name}"]`
+        );
+        // Only update unupdated DOM elements
+        if (!shipStatus.classList.contains("sunk")) {
+          shipStatus.classList.add("sunk");
+          const str = targetPlayer.name + "'s " + currShip.name + " was sunk!";
+          updateMsg(str, "concat");
+        }
       }
     }
+    if (board.allSunk()) victory();
+  };
+
+  const findPlayerFromEl = (el) => {
+    return el.matches(".player1 *") ? player : opponent;
+  };
+
+  // Finds the corresponding Ship instance for a token on the board
+  const findShipFromToken = (token) => {
+    const parentPlayer = findPlayerFromEl(token);
+    const name = token.dataset.name;
+    const obj = parentPlayer.board.ships.find((ship) => ship.name == name);
+    return obj;
+  };
+
+  // Rotates a ship's position
+  const rotateShip = (e) => {
+    const board = findPlayerFromEl(e.target).board;
+    const ship = findShipFromToken(e.target);
+    const vertical = ship.isVertical();
+    const rotatedPos = board.rotatePosition(ship.position, vertical);
+
+    // Proceed if rotated position is valid
+    if (board.placeShip(ship, rotatedPos)) {
+      const rotated = 1 - vertical;
+      e.target.style.setProperty("--vertical", rotated);
+    }
+    // Play shake animation if invalid
+    else {
+      e.target.classList.remove("shake");
+      e.target.classList.add("shake");
+    }
+  };
+
+  const victory = () => {
+    const { victor, loser } = findVictor();
+    const victoryMargin = loser.board.ships.filter((ship) => ship.sunk).length;
+    const index = victor === player ? 4 + victoryMargin : victoryMargin - 1;
+    const msgs = [
+      ["Narrow defeat", "You were bested but not beaten"],
+      ["Valiant defeat", "So close yet so far"],
+      ["Honourable loss", "Better luck next time"],
+      ["Crushing defeat", "The enemy proceeds unhindered"],
+      ["Catastrophe", "...What even?"],
+      ["Pyrrhic victory", "You won, but at what cost?"],
+      ["Close victory", "Enemy eradicated with heavy casualties"],
+      ["Clean Victory", ""],
+      ["Naval domination", "Nothing gets past you"],
+      ["Ruler of the seas", "Nary a scratch to be found"],
+    ];
+    toggleModal(true);
+    document.querySelector(".modal .victory-msg").textContent = msgs[index][0];
+    document.querySelector(".modal .subtitle").textContent = msgs[index][1];
+  };
+
+  // Toggles victory modal visibility
+  const toggleModal = (visibility) => {
+    document.querySelector(".modal").hidden =
+      visibility ?? !document.querySelector(".modal").hidden;
+  };
+
+  const findVictor = () => {
+    if (player.board.allSunk()) return { victor: opponent, loser: player };
+    if (opponent.board.allSunk()) return { victor: player, loser: opponent };
+    else return false;
   };
 
   // Translates coordinate pair to battleship board labels
@@ -171,13 +249,14 @@ function Game() {
   // Changes message displayed to player
   const updateMsg = (msg, concatMode = false) => {
     const el = document.querySelector(".msg");
-    el.textContent = concatMode ? el.textContent + msg : msg;
+    el.textContent = concatMode ? el.textContent + "\n" + msg : msg;
   };
 
   // Randomize ship positions
   const randomize = () => {
-    // Delete ship tokens from board
     const oldTokens = document.querySelectorAll(".ship-token");
+
+    // Delete ship tokens from board
     for (const el of oldTokens) el.remove();
 
     // Render tokens at new ship positions
@@ -187,7 +266,14 @@ function Game() {
     renderShips(document.querySelector(".player2 .board"), opponent.board);
   };
 
+  // Wait in real time
   const wait = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+
+  // Find the element of the corresponding player's board
+  const getBoardEl = (targetPlayer) =>
+    targetPlayer == player
+      ? document.querySelector(".player1 .board")
+      : document.querySelector(".player2 .board");
 
   // Clears all states
   const reset = () => {
@@ -201,6 +287,39 @@ function Game() {
     }
     // Randomize ship positions
     this.randomize();
+  };
+
+  const followMouse = (e) => {
+    const cursor = document.querySelector(".spotlight");
+    cursor.style.left = e.clientX - 55 + "px";
+    cursor.style.top = e.clientY - 55 + "px";
+  };
+
+  const initDrag = (draggable) => {
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    const board = draggable.closest(".board");
+    const boardRect = board.getBoundingClientRect();
+
+    draggable.addEventListener("dragstart", (e) => {
+      startX = e.clientX;
+      startY = e.clientY;
+    });
+
+    draggable.addEventListener("drag", (e) => {
+      endX = e.clientX;
+      endY = e.clientY;
+    });
+
+    draggable.addEventListener("dragend", (e) => {
+      const dx = Math.abs(endX - startX);
+      const dy = Math.abs(endY - startY);
+
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      console.log(`Distance dragged: ${distance.toFixed(2)} pixels`);
+    });
   };
 
   return { init };

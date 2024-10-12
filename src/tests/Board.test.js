@@ -132,22 +132,6 @@ describe("clears board", () => {
   });
 });
 
-describe("randomly places ships from a list", () => {
-  test("game config", () => {
-    const shipSet = [
-      [5, "Carrier"],
-      [4, "Battleship"],
-      [3, "Cruiser"],
-      [3, "Submarine"],
-      [2, "Destroyer"],
-    ];
-
-    for (const [size, name] of shipSet) {
-      myBoard.placeShip(new Ship(size, 0, name));
-    }
-  });
-});
-
 describe("helper functions", () => {
   it("checks if arrays are equal", () => {
     expect(
@@ -156,12 +140,38 @@ describe("helper functions", () => {
   });
   it("identifies squares adjacent to a coordinate", () => {
     const adjacent = myBoard.adjacentSquares([0, 0]);
-    const comparedArr = [
+    const expected = [
       [0, 1],
       [1, 0],
     ];
-    for (let i = 0; i < adjacent.length; i++) {
-      expect(myBoard.arrsMatch(adjacent[i], comparedArr[i])).toBe(true);
+    for (const square of adjacent) {
+      expect(expected.some((arr) => myBoard.arrsMatch(arr, square))).toBe(true);
     }
+  });
+  it("rotates coordinates clockwise", () => {
+    const pos = [
+      [1, 1],
+      [2, 1],
+      [3, 1],
+    ];
+    const rotatedPos = [
+      [1, 1],
+      [1, 2],
+      [1, 3],
+    ];
+    expect(myBoard.rotatePosition(pos, true)).toEqual(rotatedPos);
+  });
+  it("rotates coordinates counterlockwise", () => {
+    const pos = [
+      [1, 1],
+      [2, 1],
+      [3, 1],
+    ];
+    const rotatedPos = [
+      [1, 1],
+      [1, 2],
+      [1, 3],
+    ];
+    expect(myBoard.rotatePosition(rotatedPos, false)).toEqual(pos);
   });
 });

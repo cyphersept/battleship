@@ -7,13 +7,6 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="spotlight"></div>
-    <template id="ship-template">
-      <div class="ship">
-        <div class="ship-name"></div>
-        <div class="ship-visual"></div>
-      </div>
-    </template>
     <header>
       <h1>Battleship</h1>
     </header>
@@ -42,10 +35,22 @@
         </div>
       </section>
     </main>
+    <div class="spotlight"></div>
+    <template id="ship-template">
+      <div class="ship">
+        <div class="ship-name"></div>
+        <div class="ship-visual"></div>
+      </div>
+    </template>
+    <section class="modal" hidden>
+      <h2 class="victory-msg"></h2>
+      <div class="subtitle"></div>
+      <button id="replay">Play again</button>
+    </section>
     <footer>
       <span>Source code:</span>
       <a
-        href="http://github.com/cyphersept/memory-game"
+        href="http://github.com/cyphersept/battleship"
         target="_blank"
         rel="noopener noreferrer"
         >cyphersept

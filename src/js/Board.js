@@ -4,12 +4,6 @@ class Board {
     this.size = size;
   }
   #attacked = [];
-  #occupied() {
-    return this.ships.reduce(
-      (result, ship) => result.concat(ship.position),
-      []
-    );
-  }
 
   // Randomly repositions and resets all ships in the ship list
   randomizeAllShips() {
@@ -48,9 +42,10 @@ class Board {
       ship.setPosition(p);
       if (this.ships.indexOf(ship) === -1) this.ships.push(ship);
     }
-    // Try another random position
-    else this.placeShip(ship);
-    return positionValid;
+    // For randomly placed ships, try another location
+    else if (position == undefined) this.placeShip(ship);
+    // Reject invalid positions
+    else return positionValid;
   }
 
   // Updates board based on hit or miss at square
@@ -72,13 +67,36 @@ class Board {
     return hit;
   }
 
+  rotatePosition(pos, counterclockwise) {
+    const result = [];
+    const [originX, originY] = pos[0];
+
+    // Rotate each pair 90 degrees clockwise
+    for (const point of pos) {
+      const [pointX, pointY] = point;
+      const [dx, dy] = [pointX - originX, pointY - originY];
+
+      // Rotate around origin according to specified direction
+      const rotated = counterclockwise
+        ? [originX + dy, originY + dx]
+        : [originX + dy, originY + dx];
+      result.push(rotated);
+    }
+
+    return result;
+  }
+
+  // Check if an attack has already been launched at coordinate
   beenAttacked(coord) {
     return !!this.#attacked.find((el) => this.arrsMatch(coord, el));
   }
 
+  // Have all ships been sunk?
   allSunk() {
     return this.ships.every((ship) => ship.sunk);
   }
+
+  // Randomly generates a coordinate from the board
   randomCoord(max = this.size) {
     return [Math.floor(Math.random() * max), Math.floor(Math.random() * max)];
   }
