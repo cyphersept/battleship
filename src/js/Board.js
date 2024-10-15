@@ -96,6 +96,11 @@ class Board {
     return this.ships.every((ship) => ship.sunk);
   }
 
+  reset() {
+    this.#attacked = [];
+    this.ships.every((ship) => ship.reset());
+  }
+
   // Randomly generates a coordinate from the board
   randomCoord(max = this.size) {
     return [Math.floor(Math.random() * max), Math.floor(Math.random() * max)];

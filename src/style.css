@@ -191,6 +191,14 @@ header {
   pointer-events: auto;
 }
 
+.player2 .ship-token {
+  visibility: hidden;
+
+  &.sunk {
+    visibility: visible;
+  }
+}
+
 .status {
   background: var(--c3);
   border-radius: 10px;

@@ -34,4 +34,4 @@ class Ship {
   }
 }
 
-module.exports = { Ship };
+module.exports = Ship;

@@ -1,5 +1,5 @@
 const { CPU, Human } = require("./Player.js");
-const { Ship } = require("./Ship.js");
+const Ship = require("./Ship.js");
 require("../style.css");
 
 function Game() {
@@ -18,12 +18,9 @@ function Game() {
     // Randomly place ships on both boards
     for (const [size, name] of shipSet) {
       const currShip = new Ship(size, 0, name);
+      const currShip2 = new Ship(size, 0, name);
       player.board.placeShip(currShip);
-      console.log(currShip.name + " placed at " + currShip.position);
-    }
-    for (const [size, name] of shipSet) {
-      const currShip = new Ship(size, 0, name);
-      opponent.board.placeShip(currShip);
+      opponent.board.placeShip(currShip2);
     }
 
     renderBoard(getBoardEl(player), player.board);
@@ -162,7 +159,11 @@ function Game() {
         );
         // Only update unupdated DOM elements
         if (!shipStatus.classList.contains("sunk")) {
+          const token = playerEl.querySelector(
+            `.ship-token[data-name="${currShip.name}"]`
+          );
           shipStatus.classList.add("sunk");
+          token.classList.add("sunk");
           const str = targetPlayer.name + "'s " + currShip.name + " was sunk!";
           updateMsg(str, "sameLine");
         }
@@ -221,7 +222,7 @@ function Game() {
       ["Catastrophe", "...What even?"],
       ["Pyrrhic victory", "You won, but at what cost?"],
       ["Close victory", "Enemy eradicated with heavy casualties"],
-      ["Clean Victory", ""],
+      ["Clean Victory", "Nothing to report"],
       ["Naval domination", "Nothing gets past you"],
       ["Ruler of the seas", "Victory without a scratch"],
     ];
@@ -305,6 +306,8 @@ function Game() {
         el.classList.remove(tag);
       });
     }
+    player.board.reset();
+    opponent.board.reset();
     // Hide victory modal
     toggleModal(false);
     // Randomize ship positions
