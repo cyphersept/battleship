@@ -45,7 +45,7 @@ class Board {
     // For randomly placed ships, try another location
     else if (position == undefined) this.placeShip(ship);
     // Reject invalid positions
-    else return positionValid;
+    return positionValid;
   }
 
   // Updates board based on hit or miss at square

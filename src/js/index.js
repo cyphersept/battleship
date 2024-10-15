@@ -39,9 +39,8 @@ function Game() {
     document.getElementById("start").onclick = start;
     document.getElementById("random").onclick = randomize;
     document.querySelector(".modal button").onclick = reset;
-    document
-      .querySelector(".spotlight")
-      .addEventListener("mousemove", followMouse);
+    window.addEventListener("mousemove", followMouse);
+    initDraggables(getBoardEl(player));
   };
 
   const start = () => {
@@ -68,10 +67,11 @@ function Game() {
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(e.target, hitSuccess);
     updateMsg(`${player.name} attacked ${coordName(coords)}. ${status}!`);
-    updateMsg(`${opponent.name} is thinking...`, "concat");
-    updateStatus(opponent);
-    turn = opponent;
-    launchCPUAttack();
+    if (updateStatus(opponent)) {
+      turn = opponent;
+      updateMsg(`${opponent.name} is thinking...`, "concat");
+      launchCPUAttack();
+    }
   };
 
   // Have the CPU target and attack a player tile
@@ -91,9 +91,10 @@ function Game() {
     const status = hitSuccess ? "Hit" : "Miss";
     updateHit(target, hitSuccess);
     updateMsg(`${opponent.name} attacked ${coordName(coords)}. ${status}!`);
-    updateMsg(`${player.name}'s turn:`, "concat");
-    updateStatus(player);
-    turn = player;
+    if (updateStatus(player)) {
+      turn = player;
+      updateMsg(`${player.name}'s turn:`, "concat");
+    }
   };
 
   // Generates tiles for board
@@ -163,11 +164,15 @@ function Game() {
         if (!shipStatus.classList.contains("sunk")) {
           shipStatus.classList.add("sunk");
           const str = targetPlayer.name + "'s " + currShip.name + " was sunk!";
-          updateMsg(str, "concat");
+          updateMsg(str, "sameLine");
         }
       }
     }
-    if (board.allSunk()) victory();
+    if (board.allSunk()) {
+      victory();
+      return false;
+    }
+    return true;
   };
 
   const findPlayerFromEl = (el) => {
@@ -193,6 +198,7 @@ function Game() {
     if (board.placeShip(ship, rotatedPos)) {
       const rotated = 1 - vertical;
       e.target.style.setProperty("--vertical", rotated);
+      console.log("New position: " + ship.position);
     }
     // Play shake animation if invalid
     else {
@@ -203,7 +209,9 @@ function Game() {
 
   const victory = () => {
     const { victor, loser } = findVictor();
-    const victoryMargin = loser.board.ships.filter((ship) => ship.sunk).length;
+    const victoryMargin =
+      loser.board.ships.length -
+      victor.board.ships.filter((ship) => ship.sunk).length;
     const index = victor === player ? 4 + victoryMargin : victoryMargin - 1;
     const msgs = [
       ["Narrow defeat", "You were bested but not beaten"],
@@ -215,7 +223,7 @@ function Game() {
       ["Close victory", "Enemy eradicated with heavy casualties"],
       ["Clean Victory", ""],
       ["Naval domination", "Nothing gets past you"],
-      ["Ruler of the seas", "Nary a scratch to be found"],
+      ["Ruler of the seas", "Victory without a scratch"],
     ];
     toggleModal(true);
     document.querySelector(".modal .victory-msg").textContent = msgs[index][0];
@@ -224,10 +232,12 @@ function Game() {
 
   // Toggles victory modal visibility
   const toggleModal = (visibility) => {
-    document.querySelector(".modal").hidden =
-      visibility ?? !document.querySelector(".modal").hidden;
+    document.querySelector(".modal").style.visibility = visibility
+      ? "visible"
+      : "hidden";
   };
 
+  // Identify winning player
   const findVictor = () => {
     if (player.board.allSunk()) return { victor: opponent, loser: player };
     if (opponent.board.allSunk()) return { victor: player, loser: opponent };
@@ -247,9 +257,11 @@ function Game() {
   };
 
   // Changes message displayed to player
-  const updateMsg = (msg, concatMode = false) => {
+  const updateMsg = (msg, mode = false) => {
     const el = document.querySelector(".msg");
-    el.textContent = concatMode ? el.textContent + "\n" + msg : msg;
+    if (mode == "concat") el.textContent = el.textContent + "\n" + msg;
+    else if (mode == "sameLine") el.textContent = el.textContent + " " + msg;
+    else el.textContent = msg;
   };
 
   // Randomize ship positions
@@ -269,9 +281,17 @@ function Game() {
   // Wait in real time
   const wait = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
+  // Get gameboard coordinates from on-screen mouse postition
+  const findCoordsFromPoint = (e) => {
+    const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
+    const tile = elementsAtPoint.find((el) => el.classList.contains("tile"));
+    const coord = [tile.dataset.x, tile.dataset.y];
+    return coord;
+  };
+
   // Find the element of the corresponding player's board
   const getBoardEl = (targetPlayer) =>
-    targetPlayer == player
+    Object.is(targetPlayer, player)
       ? document.querySelector(".player1 .board")
       : document.querySelector(".player2 .board");
 
@@ -285,40 +305,56 @@ function Game() {
         el.classList.remove(tag);
       });
     }
+    // Hide victory modal
+    toggleModal(false);
     // Randomize ship positions
-    this.randomize();
+    randomize();
+    // Allows the player to make more preparations
+    document.querySelector(".game").classList.add("preparing");
   };
 
   const followMouse = (e) => {
     const cursor = document.querySelector(".spotlight");
-    cursor.style.left = e.clientX - 55 + "px";
-    cursor.style.top = e.clientY - 55 + "px";
+    const rect = document.querySelector("footer").getBoundingClientRect();
+    const maxX = rect.right + window.scrollX - 32;
+    const maxY = rect.bottom + window.scrollY - 32;
+    cursor.style.left = Math.min(maxX, e.pageX) + "px";
+    cursor.style.top = Math.min(maxY, e.pageY) + "px";
   };
 
-  const initDrag = (draggable) => {
-    let startX = 0;
-    let startY = 0;
-    let endX = 0;
-    let endY = 0;
-    const board = draggable.closest(".board");
-    const boardRect = board.getBoundingClientRect();
+  // Drag and drop ship positioning
+  const initDraggables = (draggable) => {
+    let startCoord;
+    let endCoord;
 
-    draggable.addEventListener("dragstart", (e) => {
-      startX = e.clientX;
-      startY = e.clientY;
+    draggable.addEventListener("click", (e) => {
+      if (e.target.matches(".ship-token")) rotateShip(e);
     });
 
-    draggable.addEventListener("drag", (e) => {
-      endX = e.clientX;
-      endY = e.clientY;
+    draggable.addEventListener("dragstart", (e) => {
+      if (e.target.matches(".ship-token")) startCoord = findCoordsFromPoint(e);
     });
 
     draggable.addEventListener("dragend", (e) => {
-      const dx = Math.abs(endX - startX);
-      const dy = Math.abs(endY - startY);
+      if (!e.target.matches(".ship-token")) return;
+      endCoord = findCoordsFromPoint(e);
+      // Cancel invalid drop locations
+      if (!endCoord) return;
+      // Find distance moved
+      const dx = endCoord[0] - startCoord[0];
+      const dy = endCoord[1] - startCoord[1];
+      const ship = findShipFromToken(e.target);
+      const board = findPlayerFromEl(e.target).board;
 
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      console.log(`Distance dragged: ${distance.toFixed(2)} pixels`);
+      // Apply distance difference to position array
+      const newPos = ship.position.map(([px, py]) => [dx + px, dy + py]);
+      if (board.placeShip(ship, newPos)) {
+        e.target.style.setProperty("--x", newPos[0][0]);
+        e.target.style.setProperty("--y", newPos[0][1]);
+      } else {
+        e.target.classList.remove("shake");
+        e.target.classList.add("shake");
+      }
     });
   };
 
