@@ -2,7 +2,7 @@
 
 Battleship game made using Jest, Webpack, and vanilla HTML/CSS/JS.
 
-Live at [cyphersept.github.io/battleship]().
+Live at [cyphersept.github.io/battleship](cyphersept.github.io/battleship).
 
 ### Instructions
 
